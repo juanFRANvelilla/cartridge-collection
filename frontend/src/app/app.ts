@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit, computed, inject, signal } from '@angu
 
 import { CartuchoApiService } from './cartucho-api.service';
 import { Cartucho } from './cartucho.model';
+import { descargar, documentoWord, libroExcel } from './export-listado';
 import { ThemeToggleComponent } from './shared/theme-toggle/theme-toggle.component';
 import { ThemeService } from './core/services/theme.service';
 
@@ -53,6 +54,14 @@ export class App implements OnInit {
     this.query.set(value);
   }
 
+  exportExcel(): void {
+    descargar(libroExcel(this.visible()), 'coleccion-cartuchos.xlsx');
+  }
+
+  exportWord(): void {
+    descargar(documentoWord(this.visible()), 'coleccion-cartuchos.docx');
+  }
+
   precio(value: number | null): string {
     if (value === null) {
       return '—';
@@ -96,7 +105,7 @@ export class App implements OnInit {
   private nativeDrag = false;
 
   gripDown(event: PointerEvent, index: number): void {
-    if (event.button !== 0 || this.visible().length < 2 || this.blocksDrag(event.target)) {
+    if (event.button !== 0 || this.visible().length < 2 || this.editingId() === this.visible()[index]?.id) {
       return;
     }
     this.dragFrom.set(index);
@@ -104,7 +113,7 @@ export class App implements OnInit {
   }
 
   onDragStart(event: DragEvent, index: number): void {
-    if (this.blocksDrag(event.target)) {
+    if (this.editingId() === this.visible()[index]?.id) {
       event.preventDefault();
       return;
     }
@@ -246,10 +255,6 @@ export class App implements OnInit {
     const queue = [...visible];
     const merged = this.draft().map((row) => (visibleIds.has(row.id) ? queue.shift()! : row));
     this.draft.set(merged.map((row, index) => ({ ...row, orden: index + 1 })));
-  }
-
-  private blocksDrag(target: EventTarget | null): boolean {
-    return target instanceof Element && !!target.closest('button, input, textarea, a, label');
   }
 
   private signature(rows: Cartucho[]): string {

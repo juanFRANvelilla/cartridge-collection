@@ -21,13 +21,23 @@
     <p class="banner banner-error">{{ errorMessage() }}</p>
   }
 
-  <p class="count">
-    @if (loading()) {
-      Cargando...
-    } @else {
-      {{ visible().length }} {{ visible().length === 1 ? 'cartucho' : 'cartuchos' }}
-    }
-  </p>
+  <div class="toolbar">
+    <p class="count">
+      @if (loading()) {
+        Cargando...
+      } @else {
+        {{ visible().length }} {{ visible().length === 1 ? 'cartucho' : 'cartuchos' }}
+      }
+    </p>
+    <div class="exports">
+      <button type="button" class="btn btn-ghost" [disabled]="loading() || !visible().length" (click)="exportExcel()">
+        Excel
+      </button>
+      <button type="button" class="btn btn-ghost" [disabled]="loading() || !visible().length" (click)="exportWord()">
+        Word
+      </button>
+    </div>
+  </div>
 
   <div class="table-wrap">
     <table>
@@ -44,21 +54,25 @@
         @for (row of visible(); track row.id; let index = $index) {
           <tr
             [attr.data-index]="index"
-            [attr.draggable]="editingId() === row.id ? null : 'true'"
             [class.is-source]="dragFrom() === index"
             [class.is-over]="dragOver() === index && dragFrom() !== index"
-            (pointerdown)="gripDown($event, index)"
-            (dragstart)="onDragStart($event, index)"
-            (dragend)="onDragEnd()"
             (dragover)="onDragOver($event, index)"
             (drop)="onDrop($event, index)"
           >
             <td class="grip-col">
-              <span class="grip" aria-hidden="true">
+              <button
+                type="button"
+                class="icon-btn grip"
+                [attr.draggable]="editingId() === row.id ? null : 'true'"
+                aria-label="Arrastrar para cambiar el orden"
+                (pointerdown)="gripDown($event, index)"
+                (dragstart)="onDragStart($event, index)"
+                (dragend)="onDragEnd()"
+              >
                 <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path d="M7 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM7 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM7 15.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 15.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
                 </svg>
-              </span>
+              </button>
             </td>
             <td class="numero">
               @if (editingId() === row.id) {
