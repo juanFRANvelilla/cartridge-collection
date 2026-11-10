@@ -1,6 +1,6 @@
-namespace: pre-coleccion-cartuchos-back
+namespace: cartridge-catalog-back
 replicaCount: 1
-registry: ghcr.io/juanfranvelilla/coleccion-cartuchos-backend
+registry: ghcr.io/juanfranvelilla/cartridge-collection-backend
 image:
   tag: ""
   pullPolicy: IfNotPresent

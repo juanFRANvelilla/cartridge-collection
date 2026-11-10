@@ -37,4 +37,4 @@ Abre http://localhost:4200. El `proxy.conf.json` reenvía `/api` a `127.0.0.1:80
 
 ## Kubernetes
 
-Helm en `backend/k8s` y `frontend/k8s`, solo `values-pre.yaml`. El secreto `coleccion-cartuchos-secrets` del namespace del back debe tener `DATABASE_URL`. El gateway `lab` necesita el listener `https-cartuchos-pre` para `pre.cartuchos.juanfranciscoperez.es`. Los `Jenkinsfile` publican las imágenes con tag `pre`.
+Helm en `backend/k8s` y `frontend/k8s`, solo `values-pre.yaml`. Namespaces: `cartridge-catalog-back` y `cartridge-catalog-front`. El secreto `coleccion-cartuchos-secrets` del back debe tener `DATABASE_URL`. El gateway `lab` necesita el listener `https-cartuchos-pre` para `pre.cartuchos.juanfranciscoperez.es`. La pipeline compartida publica `ghcr.io/juanfranvelilla/cartridge-collection-backend` y `ghcr.io/juanfranvelilla/cartridge-collection-frontend`.
