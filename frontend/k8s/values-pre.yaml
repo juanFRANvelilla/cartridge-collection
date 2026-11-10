@@ -35,10 +35,12 @@ ingress:
   enabled: false
 gatewayRoute:
   enabled: true
-  host: "pre.cartuchos.juanfranciscoperez.es"
+  host: "coleccion-cartuchos.juanfranciscoperez.es"
   path: /
 gateway:
   enabled: true
   name: lab
   namespace: jenkins
-  sectionName: https-cartuchos-pre
+  sectionName: https-coleccion-cartuchos
+  issuer: letsencrypt-ovh-prod
+  tlsSecret: coleccion-cartuchos-gateway-tls

@@ -14,7 +14,7 @@ extraEnv:
   - name: TZ
     value: UTC
   - name: CORS_ORIGINS
-    value: "https://pre.cartuchos.juanfranciscoperez.es"
+    value: "https://coleccion-cartuchos.juanfranciscoperez.es"
 extraEnvFrom:
   - secretRef:
       name: coleccion-cartuchos-secrets
@@ -29,7 +29,7 @@ ingress:
   enabled: false
 gatewayRoute:
   enabled: true
-  host: "pre.cartuchos.juanfranciscoperez.es"
+  host: "coleccion-cartuchos.juanfranciscoperez.es"
   path: /api
   extraPaths:
     - /health
@@ -37,6 +37,6 @@ gateway:
   enabled: true
   name: lab
   namespace: jenkins
-  sectionName: https-cartuchos-pre
+  sectionName: https-coleccion-cartuchos
 database:
   host: postgres-service.postgres.svc.cluster.local
