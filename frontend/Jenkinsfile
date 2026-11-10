@@ -1,0 +1,64 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: kaniko
+                image: gcr.io/kaniko-project/executor:debug
+                command: ['sleep', 'infinity']
+                volumeMounts:
+                - name: kaniko-secret
+                  mountPath: /kaniko/.docker
+                - name: cache-volume
+                  mountPath: /kaniko/cache
+                  subPath: kaniko
+              volumes:
+              - name: kaniko-secret
+                secret:
+                  secretName: regcred
+                  items: [{key: .dockerconfigjson, path: config.json}]
+              - name: cache-volume
+                hostPath:
+                  path: /home/juanfran/jenkins-cache
+                  type: DirectoryOrCreate
+            """
+        }
+    }
+
+    environment {
+        IMAGE_NAME  = 'ghcr.io/juanfranvelilla/coleccion-cartuchos-frontend'
+        APP_VERSION = "v${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Build and Push') {
+            steps {
+                container('kaniko') {
+                    script {
+                        def statusCode = sh(
+                            script: """
+                            /kaniko/executor \
+                            --context=${WORKSPACE}/frontend \
+                            --dockerfile=${WORKSPACE}/frontend/Dockerfile \
+                            --destination=${IMAGE_NAME}:${APP_VERSION} \
+                            --destination=${IMAGE_NAME}:pre \
+                            --cache=true \
+                            --cache-dir=/kaniko/cache
+                            """,
+                            returnStatus: true
+                        )
+
+                        if (statusCode == 0 || statusCode == -1) {
+                            echo "--- IMAGEN SUBIDA CON ÉXITO (Status: ${statusCode}) ---"
+                        } else {
+                            error "Fallo real en Kaniko. Status: ${statusCode}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

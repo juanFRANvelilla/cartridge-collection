@@ -1,0 +1,55 @@
+<main class="page">
+  <header class="header">
+    <p class="eyebrow">Colección</p>
+    <h1>Cartuchos</h1>
+  </header>
+
+  <label class="search">
+    <span class="sr-only">Buscar por número o descripción</span>
+    <input
+      type="search"
+      placeholder="Buscar por número o descripción"
+      [value]="query()"
+      (input)="onSearch($any($event.target).value)"
+    />
+  </label>
+
+  @if (errorMessage()) {
+    <p class="banner banner-error">{{ errorMessage() }}</p>
+  }
+
+  <p class="count">
+    @if (loading()) {
+      Cargando...
+    } @else {
+      {{ rows().length }} {{ rows().length === 1 ? 'cartucho' : 'cartuchos' }}
+    }
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Núm.</th>
+          <th>Descripción</th>
+          <th class="num">Precio</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td class="numero">{{ row.numero }}</td>
+            <td>{{ row.descripcion }}</td>
+            <td class="num">{{ precio(row.precio) }}</td>
+          </tr>
+        } @empty {
+          @if (!loading()) {
+            <tr>
+              <td colspan="3" class="empty">No hay cartuchos con esa búsqueda.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</main>

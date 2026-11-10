@@ -1,0 +1,36 @@
+from collections.abc import Generator
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+from app.core.config import get_settings
+
+engine = create_engine(
+    get_settings().resolved_database_url,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    connect_args={
+        "connect_timeout": 5,
+        "gssencmode": "disable",
+        "sslmode": "disable",
+    },
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def check_db_connection() -> None:
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))

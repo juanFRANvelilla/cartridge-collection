@@ -1,0 +1,44 @@
+namespace: pre-coleccion-cartuchos-front
+replicaCount: 1
+registry: ghcr.io/juanfranvelilla/coleccion-cartuchos-frontend
+image:
+  tag: ""
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+extraEnv:
+  - name: TZ
+    value: UTC
+extraEnvFrom: []
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: 50m
+  limits:
+    memory: "256Mi"
+    cpu: 500m
+volumes:
+  - name: tmpfs-var-lib-nginx-tmp
+    emptyDir:
+      medium: Memory
+  - name: tmpfs-run-nginx
+    emptyDir:
+      medium: Memory
+volumeMounts:
+  - name: tmpfs-var-lib-nginx-tmp
+    mountPath: /var/lib/nginx/tmp
+  - name: tmpfs-run-nginx
+    mountPath: /run/nginx
+ingress:
+  enabled: false
+gatewayRoute:
+  enabled: true
+  host: "pre.cartuchos.juanfranciscoperez.es"
+  path: /
+gateway:
+  enabled: true
+  name: lab
+  namespace: jenkins
+  sectionName: https-cartuchos-pre
