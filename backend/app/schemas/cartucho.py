@@ -14,7 +14,7 @@ class CartuchoRead(BaseModel):
 
 
 class CartuchoSaveItem(BaseModel):
-    id: UUID
+    id: UUID | None = None
     numero: str
     descripcion: str
     precio: float | None = None

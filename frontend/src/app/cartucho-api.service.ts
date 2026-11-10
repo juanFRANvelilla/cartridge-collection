@@ -13,6 +13,11 @@ export class CartuchoApiService {
   }
 
   save(items: Cartucho[]): Observable<Cartucho[]> {
-    return this.http.put<Cartucho[]>('/api/cartuchos', { items });
+    return this.http.put<Cartucho[]>('/api/cartuchos', {
+      items: items.map((row) => ({
+        ...row,
+        id: row.id.startsWith('nuevo-') ? null : row.id,
+      })),
+    });
   }
 }

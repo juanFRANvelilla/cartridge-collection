@@ -62,6 +62,22 @@ export class App implements OnInit {
     descargar(documentoWord(this.visible()), 'coleccion-cartuchos.docx');
   }
 
+  anadir(): void {
+    const row: Cartucho = {
+      id: `nuevo-${crypto.randomUUID()}`,
+      numero: '',
+      descripcion: '',
+      precio: null,
+      orden: this.draft().length + 1,
+    };
+    this.query.set('');
+    this.draft.update((rows) => [...rows, row]);
+    this.editingId.set(row.id);
+    this.precioTexto.update((current) => ({ ...current, [row.id]: '' }));
+    this.errorMessage.set(null);
+    queueMicrotask(() => document.querySelector('tbody tr:last-child')?.scrollIntoView({ block: 'center' }));
+  }
+
   precio(value: number | null): string {
     if (value === null) {
       return '—';
@@ -201,6 +217,11 @@ export class App implements OnInit {
       this.errorMessage.set('El número y la descripción son obligatorios.');
       return;
     }
+    const repetido = numeroRepetido(items, this.baseline());
+    if (repetido) {
+      this.errorMessage.set(`El número ${repetido} ya está en el listado.`);
+      return;
+    }
     this.saving.set(true);
     this.errorMessage.set(null);
     this.api.save(items).subscribe({
@@ -270,6 +291,23 @@ export class App implements OnInit {
     }
     return null;
   }
+}
+
+function numeroRepetido(draft: Cartucho[], baseline: Cartucho[]): string | null {
+  const actuales = new Map<string, number>();
+  for (const row of baseline) {
+    actuales.set(row.numero, (actuales.get(row.numero) ?? 0) + 1);
+  }
+  const propuesta = new Map<string, number>();
+  for (const row of draft) {
+    propuesta.set(row.numero, (propuesta.get(row.numero) ?? 0) + 1);
+  }
+  for (const [numero, veces] of propuesta) {
+    if (veces > Math.max(actuales.get(numero) ?? 0, 1)) {
+      return numero;
+    }
+  }
+  return null;
 }
 
 function parsePrecio(raw: string): number | null | undefined {

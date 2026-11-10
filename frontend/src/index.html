@@ -2,6 +2,14 @@
 <html lang="es" data-theme="dark">
 <head>
   <meta charset="utf-8">
+  <script>
+    try {
+      var cartridgeTheme = localStorage.getItem('cartridge-theme');
+      if (cartridgeTheme === 'light' || cartridgeTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', cartridgeTheme);
+      }
+    } catch (e) {}
+  </script>
   <title>Colección de cartuchos</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -1,3 +1,4 @@
+from collections import Counter
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.cartucho import Cartucho
-from app.schemas.cartucho import CartuchoRead, CartuchoSaveRequest
+from app.schemas.cartucho import CartuchoRead, CartuchoSaveItem, CartuchoSaveRequest
 
 router = APIRouter(prefix="/api/cartuchos", tags=["cartuchos"])
 
@@ -38,26 +39,52 @@ def save_cartuchos(payload: CartuchoSaveRequest, db: Session = Depends(get_db)) 
     """Guarda número, descripción, precio y orden de todo el listado."""
     rows = list(db.scalars(select(Cartucho)).all())
     by_id = {row.id: row for row in rows}
-    incoming = {item.id for item in payload.items}
-    if incoming != set(by_id):
+    incoming_ids = [item.id for item in payload.items if item.id is not None]
+    if len(incoming_ids) != len(set(incoming_ids)) or set(incoming_ids) != set(by_id):
         raise HTTPException(status_code=400, detail="El listado no coincide con los cartuchos guardados.")
     if len({item.orden for item in payload.items}) != len(payload.items):
         raise HTTPException(status_code=400, detail="Hay números de orden repetidos.")
+    _rechazar_numeros_repetidos(rows, payload.items)
 
     for offset, item in enumerate(payload.items, start=1):
-        by_id[item.id].orden = -offset
+        if item.id is not None:
+            by_id[item.id].orden = -offset
     db.flush()
 
-    for item in payload.items:
-        row = by_id[item.id]
-        row.numero = item.numero
-        row.descripcion = item.descripcion
-        row.precio = None if item.precio is None else Decimal(f"{item.precio:.2f}")
+    ordered: list[Cartucho] = []
+    for offset, item in enumerate(payload.items, start=1):
+        precio = None if item.precio is None else Decimal(f"{item.precio:.2f}")
+        if item.id is None:
+            row = Cartucho(
+                numero=item.numero,
+                descripcion=item.descripcion,
+                precio=precio,
+                orden=-(len(payload.items) + offset),
+            )
+            db.add(row)
+        else:
+            row = by_id[item.id]
+            row.numero = item.numero
+            row.descripcion = item.descripcion
+            row.precio = precio
+        ordered.append(row)
+    db.flush()
+
+    for item, row in zip(payload.items, ordered, strict=True):
         row.orden = item.orden
     db.commit()
 
     saved = db.scalars(select(Cartucho).order_by(Cartucho.orden.asc(), Cartucho.id.asc())).all()
     return [_read(row) for row in saved]
+
+
+def _rechazar_numeros_repetidos(rows: list[Cartucho], items: list[CartuchoSaveItem]) -> None:
+    """Una fila nueva no puede usar un número que ya esté. Los repetidos que ya había se conservan."""
+    actuales = Counter(row.numero for row in rows)
+    propuesta = Counter(item.numero for item in items)
+    for numero, veces in propuesta.items():
+        if veces > max(actuales[numero], 1):
+            raise HTTPException(status_code=400, detail=f"El número {numero} ya está en el listado.")
 
 
 def _read(row: Cartucho) -> CartuchoRead:

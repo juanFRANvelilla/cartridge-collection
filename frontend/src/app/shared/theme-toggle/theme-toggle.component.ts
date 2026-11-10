@@ -6,7 +6,7 @@ import { ThemeService } from '../../core/services/theme.service';
   selector: 'app-theme-toggle',
   template: `
     <label class="switch" [attr.aria-label]="theme.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
-      <input type="checkbox" [checked]="theme.isDark()" (change)="theme.toggle()" />
+      <input type="checkbox" [checked]="theme.isDark()" (change)="theme.setDark($any($event.target).checked)" />
       <span class="slider"></span>
     </label>
   `,
