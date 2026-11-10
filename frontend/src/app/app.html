@@ -1,7 +1,10 @@
 <main class="page">
   <header class="header">
-    <p class="eyebrow">Colección</p>
-    <h1>Cartuchos</h1>
+    <div>
+      <p class="eyebrow">Colección</p>
+      <h1>Cartuchos</h1>
+    </div>
+    <app-theme-toggle />
   </header>
 
   <label class="search">
@@ -22,7 +25,7 @@
     @if (loading()) {
       Cargando...
     } @else {
-      {{ rows().length }} {{ rows().length === 1 ? 'cartucho' : 'cartuchos' }}
+      {{ visible().length }} {{ visible().length === 1 ? 'cartucho' : 'cartuchos' }}
     }
   </p>
 
@@ -30,22 +33,88 @@
     <table>
       <thead>
         <tr>
+          <th class="grip-col"><span class="sr-only">Orden</span></th>
           <th>Núm.</th>
           <th>Descripción</th>
           <th class="num">Precio</th>
+          <th class="edit-col"><span class="sr-only">Editar</span></th>
         </tr>
       </thead>
       <tbody>
-        @for (row of rows(); track row.id) {
-          <tr>
-            <td class="numero">{{ row.numero }}</td>
-            <td>{{ row.descripcion }}</td>
-            <td class="num">{{ precio(row.precio) }}</td>
+        @for (row of visible(); track row.id; let index = $index) {
+          <tr
+            [attr.data-index]="index"
+            [attr.draggable]="editingId() === row.id ? null : 'true'"
+            [class.is-source]="dragFrom() === index"
+            [class.is-over]="dragOver() === index && dragFrom() !== index"
+            (pointerdown)="gripDown($event, index)"
+            (dragstart)="onDragStart($event, index)"
+            (dragend)="onDragEnd()"
+            (dragover)="onDragOver($event, index)"
+            (drop)="onDrop($event, index)"
+          >
+            <td class="grip-col">
+              <span class="grip" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M7 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM7 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM7 15.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 15.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                </svg>
+              </span>
+            </td>
+            <td class="numero">
+              @if (editingId() === row.id) {
+                <input
+                  class="cell-input"
+                  [value]="row.numero"
+                  aria-label="Número"
+                  (input)="patchTexto(row.id, 'numero', $any($event.target).value)"
+                />
+              } @else {
+                {{ row.numero }}
+              }
+            </td>
+            <td>
+              @if (editingId() === row.id) {
+                <input
+                  class="cell-input"
+                  [value]="row.descripcion"
+                  aria-label="Descripción"
+                  (input)="patchTexto(row.id, 'descripcion', $any($event.target).value)"
+                />
+              } @else {
+                {{ row.descripcion }}
+              }
+            </td>
+            <td class="num">
+              @if (editingId() === row.id) {
+                <input
+                  class="cell-input cell-input-price"
+                  inputmode="decimal"
+                  [value]="precioCampo(row)"
+                  aria-label="Precio"
+                  (input)="patchPrecio(row.id, $any($event.target).value)"
+                />
+              } @else {
+                {{ precio(row.precio) }}
+              }
+            </td>
+            <td class="edit-col">
+              <button
+                type="button"
+                class="icon-btn pencil"
+                [class.pencil-on]="editingId() === row.id"
+                [attr.aria-label]="editingId() === row.id ? 'Cerrar edición' : 'Editar fila'"
+                (click)="toggleEdit(row)"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="m2.695 14.763-1.262 3.154a.5.5 0 0 0 .65.65l3.155-1.262a4 4 0 0 0 1.343-.885L17.5 5.5a2.121 2.121 0 0 0-3-3L3.58 13.42a4 4 0 0 0-.885 1.343Z" />
+                </svg>
+              </button>
+            </td>
           </tr>
         } @empty {
           @if (!loading()) {
             <tr>
-              <td colspan="3" class="empty">No hay cartuchos con esa búsqueda.</td>
+              <td colspan="5" class="empty">No hay cartuchos con esa búsqueda.</td>
             </tr>
           }
         }
@@ -53,3 +122,12 @@
     </table>
   </div>
 </main>
+
+@if (dirty()) {
+  <div class="confirm-bar">
+    <button type="button" class="btn btn-ghost" [disabled]="saving()" (click)="cancel()">Cancelar</button>
+    <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="confirm()">
+      {{ saving() ? 'Guardando...' : 'Confirmar cambios' }}
+    </button>
+  </div>
+}

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.cartucho import Cartucho
-from app.schemas.cartucho import CartuchoRead
+from app.schemas.cartucho import CartuchoRead, CartuchoSaveRequest
 
 router = APIRouter(prefix="/api/cartuchos", tags=["cartuchos"])
 
@@ -28,13 +30,41 @@ def list_cartuchos(q: str | None = None, db: Session = Depends(get_db)) -> list[
             )
         )
     rows = db.scalars(stmt.order_by(Cartucho.orden.asc(), Cartucho.id.asc())).all()
-    return [
-        CartuchoRead(
-            id=row.id,
-            numero=row.numero,
-            descripcion=row.descripcion,
-            precio=None if row.precio is None else float(row.precio),
-            orden=row.orden,
-        )
-        for row in rows
-    ]
+    return [_read(row) for row in rows]
+
+
+@router.put("", response_model=list[CartuchoRead])
+def save_cartuchos(payload: CartuchoSaveRequest, db: Session = Depends(get_db)) -> list[CartuchoRead]:
+    """Guarda número, descripción, precio y orden de todo el listado."""
+    rows = list(db.scalars(select(Cartucho)).all())
+    by_id = {row.id: row for row in rows}
+    incoming = {item.id for item in payload.items}
+    if incoming != set(by_id):
+        raise HTTPException(status_code=400, detail="El listado no coincide con los cartuchos guardados.")
+    if len({item.orden for item in payload.items}) != len(payload.items):
+        raise HTTPException(status_code=400, detail="Hay números de orden repetidos.")
+
+    for offset, item in enumerate(payload.items, start=1):
+        by_id[item.id].orden = -offset
+    db.flush()
+
+    for item in payload.items:
+        row = by_id[item.id]
+        row.numero = item.numero
+        row.descripcion = item.descripcion
+        row.precio = None if item.precio is None else Decimal(f"{item.precio:.2f}")
+        row.orden = item.orden
+    db.commit()
+
+    saved = db.scalars(select(Cartucho).order_by(Cartucho.orden.asc(), Cartucho.id.asc())).all()
+    return [_read(row) for row in saved]
+
+
+def _read(row: Cartucho) -> CartuchoRead:
+    return CartuchoRead(
+        id=row.id,
+        numero=row.numero,
+        descripcion=row.descripcion,
+        precio=None if row.precio is None else float(row.precio),
+        orden=row.orden,
+    )

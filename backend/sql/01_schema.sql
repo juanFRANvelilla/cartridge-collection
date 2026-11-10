@@ -1,7 +1,7 @@
 -- Conectar a la base `coleccion_cartuchos` y ejecutar.
 
 CREATE TABLE IF NOT EXISTS cartucho (
-    id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     numero      TEXT NOT NULL,
     descripcion TEXT NOT NULL,
     precio      NUMERIC(10, 2),

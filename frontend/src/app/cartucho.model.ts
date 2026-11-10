@@ -1,5 +1,5 @@
 export interface Cartucho {
-  id: number;
+  id: string;
   numero: string;
   descripcion: string;
   precio: number | null;
